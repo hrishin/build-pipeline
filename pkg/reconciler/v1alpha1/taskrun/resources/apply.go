@@ -43,7 +43,7 @@ func ApplyParameters(spec *v1alpha1.TaskSpec, tr *v1alpha1.TaskRun, defaults ...
 
 // ApplyResources applies the templating from values in resources which are referenced in spec as subitems
 // of the replacementStr. It retrieves the referenced resources via the getter.
-func ApplyResources(spec *v1alpha1.TaskSpec, resources []v1alpha1.TaskResourceBinding, getter GetResource, replacementStr string) (*v1alpha1.TaskSpec, error) {
+func ApplyResources(spec *v1alpha1.TaskSpec, resources []v1alpha1.TaskResourceBinding, getter GetResource, replacementStr string, ns string) (*v1alpha1.TaskSpec, error) {
 	replacements := map[string]string{}
 
 	for _, r := range resources {
@@ -51,7 +51,7 @@ func ApplyResources(spec *v1alpha1.TaskSpec, resources []v1alpha1.TaskResourceBi
 		if err != nil {
 			return nil, err
 		}
-
+		pr.Namespace = ns
 		resource, err := v1alpha1.ResourceFromType(pr)
 		if err != nil {
 			return nil, err

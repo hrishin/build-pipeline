@@ -118,6 +118,7 @@ func AddOutputResources(
 			}
 		default:
 			{
+				resource.Namespace = taskRun.Namespace
 				resSpec, err := v1alpha1.ResourceFromType(resource)
 				if err != nil {
 					return err

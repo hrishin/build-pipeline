@@ -477,11 +477,11 @@ func (c *Reconciler) createPod(tr *v1alpha1.TaskRun, ts *v1alpha1.TaskSpec, task
 	ts = resources.ApplyParameters(ts, tr, defaults...)
 
 	// Apply bound resource templating from the taskrun.
-	ts, err = resources.ApplyResources(ts, tr.Spec.Inputs.Resources, c.resourceLister.PipelineResources(tr.Namespace).Get, "inputs")
+	ts, err = resources.ApplyResources(ts, tr.Spec.Inputs.Resources, c.resourceLister.PipelineResources(tr.Namespace).Get, "inputs", tr.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("couldnt apply input resource templating: %s", err)
 	}
-	ts, err = resources.ApplyResources(ts, tr.Spec.Outputs.Resources, c.resourceLister.PipelineResources(tr.Namespace).Get, "outputs")
+	ts, err = resources.ApplyResources(ts, tr.Spec.Outputs.Resources, c.resourceLister.PipelineResources(tr.Namespace).Get, "outputs", tr.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("couldnt apply output resource templating: %s", err)
 	}

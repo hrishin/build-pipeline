@@ -41,10 +41,13 @@ const (
 
 	// PipelineResourceTypeCluster indicates that this source is a k8s cluster Image.
 	PipelineResourceTypeCluster PipelineResourceType = "cluster"
+
+	// PipelineResourceTypeIS indicates that this source is a k8s cluster Image.
+	PipelineResourceTypeIS PipelineResourceType = "imagestream"
 )
 
 // AllResourceTypes can be used for validation to check if a provided Resource type is one of the known types.
-var AllResourceTypes = []PipelineResourceType{PipelineResourceTypeGit, PipelineResourceTypeStorage, PipelineResourceTypeImage, PipelineResourceTypeCluster}
+var AllResourceTypes = []PipelineResourceType{PipelineResourceTypeGit, PipelineResourceTypeStorage, PipelineResourceTypeImage, PipelineResourceTypeCluster, PipelineResourceTypeIS}
 
 // PipelineResourceInterface interface to be implemented by different PipelineResource types
 type PipelineResourceInterface interface {
@@ -161,6 +164,8 @@ func ResourceFromType(r *PipelineResource) (PipelineResourceInterface, error) {
 		return NewClusterResource(r)
 	case PipelineResourceTypeStorage:
 		return NewStorageResource(r)
+	case PipelineResourceTypeIS:
+		return NewImageStreamResource(r)
 	}
 	return nil, fmt.Errorf("%s is an invalid or unimplemented PipelineResource", r.Spec.Type)
 }
