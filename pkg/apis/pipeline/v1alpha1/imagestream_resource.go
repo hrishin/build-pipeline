@@ -28,11 +28,11 @@ const os4Registry = "image-registry.openshift-image-registry.svc:5000"
 // NewImageStreamResource creates a new NewImageStreamResource from a PipelineResource.
 func NewImageStreamResource(r *PipelineResource) (*ImageStreamResource, error) {
 	if r.Spec.Type != PipelineResourceTypeIS {
-		return nil, fmt.Errorf("ImageResource: Cannot create an ImageStream resource from a %s Pipeline Resource", r.Spec.Type)
+		return nil, fmt.Errorf("ImageStreamResource: Cannot create an ImageStream resource from a %s Pipeline Resource", r.Spec.Type)
 	}
 
 	if r.Namespace == "" {
-		return nil, fmt.Errorf("ImageResource: Cannot create an ImageStream resource from a %s Pipeline Resource. Namespaces is missing from PipelineResource metadata", r.Name)
+		return nil, fmt.Errorf("ImageStreamResource: Cannot create an ImageStream resource from a %s Pipeline Resource. Namespaces is missing from PipelineResource metadata", r.Name)
 	}
 
 	isr := &ImageStreamResource{
@@ -71,7 +71,7 @@ func (s ImageStreamResource) GetType() PipelineResourceType {
 // GetParams returns the resoruce params
 func (s ImageStreamResource) GetParams() []Param { return []Param{} }
 
-// Replacements is used for template replacement on an ImageResource inside of a Taskrun.
+// Replacements is used for template replacement on an ImageStreamResource inside of a Taskrun.
 func (s *ImageStreamResource) Replacements() map[string]string {
 
 	return map[string]string{

@@ -51,6 +51,7 @@ The following `PipelineResources` are currently supported:
 - [Storage Resource](#storage-resource)
   - [GCS Storage Resource](#gcs-storage-resource)
   - [BuildGCS Storage Resource](#buildgcs-storage-resource)
+- [ImageStream Resource](#imagestream-resource)
 
 ### Git Resource
 
@@ -434,6 +435,13 @@ as storage resources for BuildGCS Storage Resource right now. This is because
 the container image
 [gcr.io/cloud-builders//gcs-fetcher](https://github.com/GoogleCloudPlatform/cloud-builders/tree/master/gcs-fetcher)
 does not support configuring secrets.
+
+### Imagestream Resource
+
+`Imagestream` resource represents an image from OpenShift integrated registry. From user standpoint this resource is used as `output` resource from `Task`. This resource accepts's the `name:tag` of the image to be produced. If the same name is used while pushing an image into OpenShift's integrated registry, it automatically resolves the full registry URL for for given `image`.  
+
+Params that can be added are the following:
+1. `name`: Image name to be tagged as build task output. e.g. application:latest
 
 Except as otherwise noted, the content of this page is licensed under the
 [Creative Commons Attribution 4.0 License](https://creativecommons.org/licenses/by/4.0/),
