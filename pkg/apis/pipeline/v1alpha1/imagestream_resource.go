@@ -24,15 +24,18 @@ import (
 )
 
 const os4Registry = "image-registry.openshift-image-registry.svc:5000"
-const os3Registry = "docker-registry.default.svc:5000"
 
 // NewImageStreamResource creates a new NewImageStreamResource from a PipelineResource.
 func NewImageStreamResource(r *PipelineResource) (*ImageStreamResource, error) {
-	fmt.Printf("pipeline resource %v \n", *r)
 	if r.Spec.Type != PipelineResourceTypeIS {
 		return nil, fmt.Errorf("ImageResource: Cannot create an ImageStream resource from a %s Pipeline Resource", r.Spec.Type)
 	}
-	ir := &ImageStreamResource{
+
+	if r.Namespace == "" {
+		return nil, fmt.Errorf("ImageResource: Cannot create an ImageStream resource from a %s Pipeline Resource. Namespaces is missing from PipelineResource metadata", r.Name)
+	}
+
+	isr := &ImageStreamResource{
 		Type: PipelineResourceTypeIS,
 		Ns:   r.Namespace,
 	}
@@ -40,12 +43,12 @@ func NewImageStreamResource(r *PipelineResource) (*ImageStreamResource, error) {
 	for _, param := range r.Spec.Params {
 		switch {
 		case strings.EqualFold(param.Name, "name"):
-			ir.Name = param.Value
+			isr.Name = param.Value
 			break
 		}
 	}
 
-	return ir, nil
+	return isr, nil
 }
 
 // NewImageStreamResource generates an endpoint where images can be stored in OpenShift.

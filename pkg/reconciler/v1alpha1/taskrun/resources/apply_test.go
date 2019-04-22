@@ -208,6 +208,7 @@ func TestApplyResources(t *testing.T) {
 		r      []v1alpha1.TaskResourceBinding
 		getter GetResource
 		rStr   string
+		ns     string
 	}
 	tests := []struct {
 		name    string
@@ -221,6 +222,7 @@ func TestApplyResources(t *testing.T) {
 			r:      []v1alpha1.TaskResourceBinding{},
 			getter: mockGetter,
 			rStr:   "inputs",
+			ns:     "test",
 		},
 		want: simpleTaskSpec,
 	}, {
@@ -230,6 +232,7 @@ func TestApplyResources(t *testing.T) {
 			r:      inputs,
 			getter: gitResourceGetter,
 			rStr:   "inputs",
+			ns:     "test",
 		},
 		want: applyMutation(simpleTaskSpec, func(spec *v1alpha1.TaskSpec) {
 			spec.Steps[1].Args = []string{"https://git-repo"}
@@ -241,6 +244,7 @@ func TestApplyResources(t *testing.T) {
 			r:      outputs,
 			getter: imageResourceGetter,
 			rStr:   "outputs",
+			ns:     "test",
 		},
 		want: applyMutation(simpleTaskSpec, func(spec *v1alpha1.TaskSpec) {
 			spec.Steps[2].Args = []string{"gcr.io/hans/sandwiches"}
@@ -252,12 +256,13 @@ func TestApplyResources(t *testing.T) {
 			r:      inputs,
 			getter: mockGetter,
 			rStr:   "inputs",
+			ns:     "test",
 		},
 		wantErr: true,
 	}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ApplyResources(tt.args.ts, tt.args.r, tt.args.getter, tt.args.rStr)
+			got, err := ApplyResources(tt.args.ts, tt.args.r, tt.args.getter, tt.args.rStr, tt.args.ns)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ApplyResources() error = %v, wantErr %v", err, tt.wantErr)
 				return

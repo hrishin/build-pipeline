@@ -51,7 +51,7 @@ func ApplyResources(spec *v1alpha1.TaskSpec, resources []v1alpha1.TaskResourceBi
 		if err != nil {
 			return nil, err
 		}
-		pr.Namespace = ns
+		pr.AddNS(ns)
 		resource, err := v1alpha1.ResourceFromType(pr)
 		if err != nil {
 			return nil, err

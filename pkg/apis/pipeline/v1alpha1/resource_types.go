@@ -169,3 +169,9 @@ func ResourceFromType(r *PipelineResource) (PipelineResourceInterface, error) {
 	}
 	return nil, fmt.Errorf("%s is an invalid or unimplemented PipelineResource", r.Spec.Type)
 }
+
+func (pr *PipelineResource) AddNS(ns string) {
+	if pr.Namespace == "" {
+		pr.Namespace = ns
+	}
+}
