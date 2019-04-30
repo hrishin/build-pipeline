@@ -350,7 +350,7 @@ func updateStatusFromPod(taskRun *v1alpha1.TaskRun, pod *corev1.Pod) {
 		taskRun.Status.SetCondition(&apis.Condition{
 			Type:   apis.ConditionSucceeded,
 			Status: corev1.ConditionUnknown,
-			Reason: "Building",
+			Reason: reasonRunning,
 		})
 	case corev1.PodFailed:
 		msg := getFailureMessage(pod)
