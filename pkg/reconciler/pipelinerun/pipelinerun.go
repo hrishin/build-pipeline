@@ -32,6 +32,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun"
+	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/pipelinerun/stats"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
@@ -100,6 +101,7 @@ type Reconciler struct {
 	tracker           tracker.Interface
 	configStore       configStore
 	timeoutHandler    *reconciler.TimeoutSet
+	stats             *stats.Reporter
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -109,10 +111,9 @@ var _ controller.Reconciler = (*Reconciler)(nil)
 // converge the two. It then updates the Status block of the Pipeline Run
 // resource with the current status of the resource.
 func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
-
 	c.Logger.Infof("Reconciling %v", time.Now())
 
-	// Convert the namespace/name string into a distinct namespace and name
+	// Convert the namespace/name stxring into a distinct namespace and name
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		c.Logger.Errorf("invalid resource key: %s", key)
@@ -172,17 +173,22 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 	}
 
 	if equality.Semantic.DeepEqual(original.Status, pr.Status) {
-		// If we didn't change anything then don't call updateStatus.
-		// This is important because the copy we loaded from the informer's
-		// cache may be stale and we don't want to overwrite a prior update
-		// to status with this stale state.
-	} else if _, err := c.updateStatus(pr); err != nil {
+		return nil
+	}
+
+	_, err = c.updateStatus(pr);
+	if err != nil {
 		c.Logger.Warn("Failed to update PipelineRun status", zap.Error(err))
 		c.Recorder.Event(pr, corev1.EventTypeWarning, eventReasonFailed, "PipelineRun failed to update")
 		return err
 	}
-	// Since we are using the status subresource, it is not possible to update
+
+	if len(pr.Status.Conditions) != 0 && pr.Status.Conditions[0].Status != corev1.ConditionUnknown {
+		c.stats.Report(c.Logger, pr)
+	}
+
 	// the status and labels/annotations simultaneously.
+	// Since we are using the status subresource, it is not possible to update
 	if !reflect.DeepEqual(original.ObjectMeta.Labels, pr.ObjectMeta.Labels) || !reflect.DeepEqual(original.ObjectMeta.Annotations, pr.ObjectMeta.Annotations) {
 		if _, err := c.updateLabelsAndAnnotations(pr); err != nil {
 			c.Logger.Warn("Failed to update PipelineRun labels/annotations", zap.Error(err))

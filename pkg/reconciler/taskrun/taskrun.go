@@ -33,6 +33,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources/cloudevent"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/sidecars"
+	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/taskrun/stats"
 	"github.com/tektoncd/pipeline/pkg/status"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
@@ -71,6 +72,7 @@ type Reconciler struct {
 	tracker           tracker.Interface
 	cache             *entrypoint.Cache
 	timeoutHandler    *reconciler.TimeoutSet
+	reporter 		  *stats.Reporter
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -156,6 +158,11 @@ func (c *Reconciler) updateStatusLabelsAndAnnotations(tr, original *v1alpha1.Tas
 		c.Logger.Warn("Failed to update taskRun status", zap.Error(err))
 		return err
 	}
+
+	if tr.IsDone() {
+		c.reporter.Report(c.Logger, tr)
+	}
+
 	// Since we are using the status subresource, it is not possible to update
 	// the status and labels/annotations simultaneously.
 	if !reflect.DeepEqual(original.ObjectMeta.Labels, tr.ObjectMeta.Labels) {

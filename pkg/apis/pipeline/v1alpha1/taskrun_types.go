@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"github.com/tektoncd/pipeline/pkg/apis/pipeline"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -300,4 +301,20 @@ func (tr *TaskRun) IsCancelled() bool {
 // GetRunKey return the taskrun key for timeout handler map
 func (tr *TaskRun) GetRunKey() string {
 	return fmt.Sprintf("%s/%s/%s", "TaskRun", tr.Namespace, tr.Name)
+}
+
+// IsOfAPipeline return true if taskrun is a part of pipeline
+func (tr *TaskRun) IsOfAPipeline() (bool, map[string]string) {
+	if tr == nil || len(tr.Labels) == 0 {
+		return false, nil
+	}
+
+	if val, ok := tr.Labels[pipeline.GroupName+pipeline.PipelineLabelKey]; ok {
+		pipelineData := make(map[string]string)
+		pipelineData[pipeline.PipelineLabelKey] = val
+		pipelineData[pipeline.PipelineRunLabelKey] = tr.Labels[pipeline.GroupName+pipeline.PipelineRunLabelKey]
+		return true, pipelineData
+	}
+
+	return false, nil
 }

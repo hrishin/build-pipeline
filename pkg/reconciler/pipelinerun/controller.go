@@ -18,6 +18,7 @@ package pipelinerun
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	pipelineclient "github.com/tektoncd/pipeline/pkg/client/injection/client"
@@ -28,6 +29,7 @@ import (
 	pipelineruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipelinerun"
 	taskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/task"
 	taskruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/taskrun"
+	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/pipelinerun/stats"
 	"github.com/tektoncd/pipeline/pkg/reconciler"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/config"
 	"k8s.io/client-go/tools/cache"
@@ -57,6 +59,10 @@ func NewController(
 	resourceInformer := resourceinformer.Get(ctx)
 	conditionInformer := conditioninformer.Get(ctx)
 	timeoutHandler := reconciler.NewTimeoutHandler(ctx.Done(), logger)
+	reporter, err := stats.NewReporter()
+	if err != nil {
+		fmt.Errorf("Failed to create report %v", err)
+	}
 
 	opt := reconciler.Options{
 		KubeClientSet:     kubeclientset,
@@ -76,6 +82,7 @@ func NewController(
 		resourceLister:    resourceInformer.Lister(),
 		conditionLister:   conditionInformer.Lister(),
 		timeoutHandler:    timeoutHandler,
+		stats:             reporter,
 	}
 	impl := controller.NewImpl(c, c.Logger, pipelineRunControllerName)
 
