@@ -16,16 +16,4 @@ limitations under the License.
 
 package reconciler
 
-import (
-	"go.uber.org/zap"
-	"knative.dev/pkg/controller"
-)
-
 // MustNewStatsReporter creates a new instance of StatsReporter. Panics if creation fails.
-func MustNewStatsReporter(reconciler string, logger *zap.SugaredLogger) controller.StatsReporter {
-	stats, err := controller.NewStatsReporter(reconciler)
-	if err != nil {
-		logger.Fatal("Failed to initialize the stats reporter.", zap.Error(err))
-	}
-	return stats
-}

@@ -29,6 +29,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/entrypoint"
 	cloudeventclient "github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources/cloudevent"
+	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/taskrun/stats"
 	"k8s.io/client-go/tools/cache"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
@@ -55,6 +56,7 @@ func NewController(
 	podInformer := podinformer.Get(ctx)
 	resourceInformer := resourceinformer.Get(ctx)
 	timeoutHandler := reconciler.NewTimeoutHandler(ctx.Done(), logger)
+	reporter,_ := stats.NewReporter()
 
 	opt := reconciler.Options{
 		KubeClientSet:     kubeclientset,
@@ -72,6 +74,7 @@ func NewController(
 		resourceLister:    resourceInformer.Lister(),
 		timeoutHandler:    timeoutHandler,
 		cloudEventClient:  cloudeventclient.Get(ctx),
+		reporter: 		   reporter,
 	}
 	impl := controller.NewImpl(c, c.Logger, taskRunControllerName)
 
