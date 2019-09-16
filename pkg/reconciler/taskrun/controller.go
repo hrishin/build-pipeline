@@ -18,6 +18,7 @@ package taskrun
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -29,7 +30,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/entrypoint"
 	cloudeventclient "github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources/cloudevent"
-	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/taskrun/stats"
+	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/taskrun/metrics"
 	"k8s.io/client-go/tools/cache"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
@@ -56,7 +57,10 @@ func NewController(
 	podInformer := podinformer.Get(ctx)
 	resourceInformer := resourceinformer.Get(ctx)
 	timeoutHandler := reconciler.NewTimeoutHandler(ctx.Done(), logger)
-	reporter,_ := stats.NewReporter()
+	recorder, err := metrics.NewRecorder()
+	if err != nil {
+		fmt.Errorf("Failed to create taskrun metrics recorder %v", err)
+	}
 
 	opt := reconciler.Options{
 		KubeClientSet:     kubeclientset,
@@ -74,7 +78,7 @@ func NewController(
 		resourceLister:    resourceInformer.Lister(),
 		timeoutHandler:    timeoutHandler,
 		cloudEventClient:  cloudeventclient.Get(ctx),
-		reporter: 		   reporter,
+		metrics:           recorder,
 	}
 	impl := controller.NewImpl(c, c.Logger, taskRunControllerName)
 

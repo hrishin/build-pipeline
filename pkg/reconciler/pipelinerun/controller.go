@@ -29,7 +29,7 @@ import (
 	pipelineruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipelinerun"
 	taskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/task"
 	taskruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/taskrun"
-	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/pipelinerun/stats"
+	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/pipelinerun/metrics"
 	"github.com/tektoncd/pipeline/pkg/reconciler"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/config"
 	"k8s.io/client-go/tools/cache"
@@ -59,9 +59,9 @@ func NewController(
 	resourceInformer := resourceinformer.Get(ctx)
 	conditionInformer := conditioninformer.Get(ctx)
 	timeoutHandler := reconciler.NewTimeoutHandler(ctx.Done(), logger)
-	reporter, err := stats.NewReporter()
+	recorder, err := metrics.NewRecorder()
 	if err != nil {
-		fmt.Errorf("Failed to create report %v", err)
+		fmt.Errorf("Failed to create pipelinerun metrics recorder %v", err)
 	}
 
 	opt := reconciler.Options{
@@ -82,7 +82,7 @@ func NewController(
 		resourceLister:    resourceInformer.Lister(),
 		conditionLister:   conditionInformer.Lister(),
 		timeoutHandler:    timeoutHandler,
-		stats:             reporter,
+		metrics:           recorder,
 	}
 	impl := controller.NewImpl(c, c.Logger, pipelineRunControllerName)
 

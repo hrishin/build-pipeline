@@ -1,10 +1,11 @@
-package stats
+package metrics
 
 import (
 	"context"
 	"fmt"
 	"time"
 
+	"knative.dev/pkg/metrics"
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
@@ -13,23 +14,31 @@ import (
 )
 
 var (
-	pRunDurationInSeconds = stats.Float64(
-		"pipelinerun_duration",
+	prDuration = stats.Float64(
+		"pipelinerun_duration_seconds",
 		"The pipelinerun execution time in seconds",
 		stats.UnitDimensionless)
 
-	pRunLatencyDistribution = view.Distribution(10, 30, 60, 300, 900, 1800, 3600, 5400, 10800, 21600, 43200, 86400)
+	prCount = stats.Float64("" +
+		"pipelinerun_count",
+		"number of pipelineruns",
+		stats.UnitDimensionless)
+
+	pRunDistributions = view.Distribution(10, 30, 60, 300, 900, 1800, 3600, 5400, 10800, 21600, 43200, 86400)
 )
 
-type Reporter struct {
+type Recorder struct {
 	pipeline    tag.Key
 	pipelineRun tag.Key
 	namespace   tag.Key
 	status      tag.Key
+	initialized bool
 }
 
-func NewReporter() (*Reporter, error) {
-	r := &Reporter{}
+func NewRecorder() (*Recorder, error) {
+	r := &Recorder{
+		initialized: true,
+	}
 
 	pipeline, err := tag.NewKey("pipeline")
 	if err != nil {
@@ -57,26 +66,38 @@ func NewReporter() (*Reporter, error) {
 
 	err = view.Register(
 		&view.View{
-			Description: "The pipelinerun duration in seconds",
-			Measure:     pRunDurationInSeconds,
-			Aggregation: pRunLatencyDistribution,
+			Description: prDuration.Description(),
+			Measure:     prDuration,
+			Aggregation: pRunDistributions,
 			TagKeys:     []tag.Key{r.pipeline, r.pipelineRun, r.namespace, r.status},
+		},
+		&view.View{
+			Description: prCount.Description(),
+			Measure: prCount,
+			Aggregation: view.Count(),
+			TagKeys: []tag.Key{r.status},
 		},
 	)
 
 	if err != nil {
-		return nil, err
+		r.initialized = false
+		return r, err
 	}
 
 	return r, nil
 }
 
-func (r *Reporter) Report(logger *zap.SugaredLogger, pr *v1alpha1.PipelineRun) {
+func (r *Recorder) Record(logger *zap.SugaredLogger, pr *v1alpha1.PipelineRun) {
+	if !r.initialized {
+		logger.Warnf("ignoring the metrics recording for %s , failed to initialize the metrics recorder", pr.Name)
+		return
+	}
+
 	duration := time.Since(pr.Status.StartTime.Time)
+
 	if pr.Status.CompletionTime != nil {
 		duration = pr.Status.CompletionTime.Sub(pr.Status.StartTime.Time)
 	}
-
 
 	ctx, err := tag.New(
 		context.Background(),
@@ -92,5 +113,6 @@ func (r *Reporter) Report(logger *zap.SugaredLogger, pr *v1alpha1.PipelineRun) {
 		return
 	}
 
-	stats.Record(ctx, pRunDurationInSeconds.M(float64(duration/time.Second)))
+	metrics.Record(ctx, prDuration.M(float64(duration/time.Second)))
+	metrics.Record(ctx, prCount.M(1))
 }

@@ -32,7 +32,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun"
-	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/pipelinerun/stats"
+	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/pipelinerun/metrics"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
@@ -101,7 +101,7 @@ type Reconciler struct {
 	tracker           tracker.Interface
 	configStore       configStore
 	timeoutHandler    *reconciler.TimeoutSet
-	stats             *stats.Reporter
+	metrics           *metrics.Recorder
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -157,6 +157,7 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 			c.Logger.Errorf("Failed to update TaskRun status for PipelineRun %s: %v", pr.Name, err)
 			return err
 		}
+		c.metrics.Record(c.Logger, pr)
 	} else {
 		if err := c.tracker.Track(pr.GetTaskRunRef(), pr); err != nil {
 			c.Logger.Errorf("Failed to create tracker for TaskRuns for PipelineRun %s: %v", pr.Name, err)
@@ -184,7 +185,7 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 	}
 
 	if len(pr.Status.Conditions) != 0 && pr.Status.Conditions[0].Status != corev1.ConditionUnknown {
-		c.stats.Report(c.Logger, pr)
+
 	}
 
 	// the status and labels/annotations simultaneously.

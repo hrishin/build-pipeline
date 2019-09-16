@@ -33,7 +33,7 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources/cloudevent"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/sidecars"
-	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/taskrun/stats"
+	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/taskrun/metrics"
 	"github.com/tektoncd/pipeline/pkg/status"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
@@ -72,7 +72,7 @@ type Reconciler struct {
 	tracker           tracker.Interface
 	cache             *entrypoint.Cache
 	timeoutHandler    *reconciler.TimeoutSet
-	reporter 		  *stats.Reporter
+	metrics           *metrics.Recorder
 }
 
 // Check that our Reconciler implements controller.Reconciler
@@ -96,7 +96,7 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 		c.Logger.Infof("task run %q in work queue no longer exists", key)
 		return nil
 	} else if err != nil {
-		c.Logger.Errorf("Error retreiving TaskRun %q: %s", name, err)
+		c.Logger.Errorf("Error retrieving TaskRun %q: %s", name, err)
 		return err
 	}
 
@@ -136,6 +136,7 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 			c.Logger.Errorf("Error stopping sidecars for TaskRun %q: %v", name, err)
 			merr = multierror.Append(merr, err)
 		}
+		c.metrics.Record(c.Logger, tr)
 		return merr.ErrorOrNil()
 	}
 	// Reconcile this copy of the task run and then write back any status
@@ -157,10 +158,6 @@ func (c *Reconciler) updateStatusLabelsAndAnnotations(tr, original *v1alpha1.Tas
 	} else if _, err := c.updateStatus(tr); err != nil {
 		c.Logger.Warn("Failed to update taskRun status", zap.Error(err))
 		return err
-	}
-
-	if tr.IsDone() {
-		c.reporter.Report(c.Logger, tr)
 	}
 
 	// Since we are using the status subresource, it is not possible to update
