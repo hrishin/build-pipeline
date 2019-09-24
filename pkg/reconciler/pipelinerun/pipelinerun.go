@@ -157,7 +157,7 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 			c.Logger.Errorf("Failed to update TaskRun status for PipelineRun %s: %v", pr.Name, err)
 			return err
 		}
-		c.metrics.Record(c.Logger, pr)
+		c.metrics.Record(pr)
 	} else {
 		if err := c.tracker.Track(pr.GetTaskRunRef(), pr); err != nil {
 			c.Logger.Errorf("Failed to create tracker for TaskRuns for PipelineRun %s: %v", pr.Name, err)
@@ -184,10 +184,6 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 		return err
 	}
 
-	if len(pr.Status.Conditions) != 0 && pr.Status.Conditions[0].Status != corev1.ConditionUnknown {
-
-	}
-
 	// the status and labels/annotations simultaneously.
 	// Since we are using the status subresource, it is not possible to update
 	if !reflect.DeepEqual(original.ObjectMeta.Labels, pr.ObjectMeta.Labels) || !reflect.DeepEqual(original.ObjectMeta.Annotations, pr.ObjectMeta.Annotations) {
@@ -198,6 +194,7 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 		}
 	}
 
+	c.metrics.RunningPrsCount()
 	return err
 }
 

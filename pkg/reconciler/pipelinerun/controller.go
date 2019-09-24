@@ -18,7 +18,6 @@ package pipelinerun
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	pipelineclient "github.com/tektoncd/pipeline/pkg/client/injection/client"
@@ -29,9 +28,9 @@ import (
 	pipelineruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/pipelinerun"
 	taskinformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/task"
 	taskruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/taskrun"
-	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/pipelinerun/metrics"
 	"github.com/tektoncd/pipeline/pkg/reconciler"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/config"
+	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/pipelinerun/metrics"
 	"k8s.io/client-go/tools/cache"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
@@ -59,9 +58,9 @@ func NewController(
 	resourceInformer := resourceinformer.Get(ctx)
 	conditionInformer := conditioninformer.Get(ctx)
 	timeoutHandler := reconciler.NewTimeoutHandler(ctx.Done(), logger)
-	recorder, err := metrics.NewRecorder()
+	metrics, err := metrics.NewRecorder(logger, pipelineRunInformer.Lister())
 	if err != nil {
-		fmt.Errorf("Failed to create pipelinerun metrics recorder %v", err)
+		logger.Errorf("Failed to create pipelinerun metrics recorder %v", err)
 	}
 
 	opt := reconciler.Options{
@@ -82,7 +81,7 @@ func NewController(
 		resourceLister:    resourceInformer.Lister(),
 		conditionLister:   conditionInformer.Lister(),
 		timeoutHandler:    timeoutHandler,
-		metrics:           recorder,
+		metrics:           metrics,
 	}
 	impl := controller.NewImpl(c, c.Logger, pipelineRunControllerName)
 
