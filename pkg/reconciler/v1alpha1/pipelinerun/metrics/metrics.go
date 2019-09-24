@@ -27,7 +27,7 @@ var (
 		stats.UnitDimensionless)
 
 	runningPrsCount = stats.Float64("running_pipelineruns_count",
-		"Number of of pipelines running currently",
+		"Number of pipelineruns executing currently",
 		stats.UnitDimensionless)
 )
 

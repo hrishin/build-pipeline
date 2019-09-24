@@ -18,7 +18,6 @@ package taskrun
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
@@ -57,9 +56,9 @@ func NewController(
 	podInformer := podinformer.Get(ctx)
 	resourceInformer := resourceinformer.Get(ctx)
 	timeoutHandler := reconciler.NewTimeoutHandler(ctx.Done(), logger)
-	recorder, err := metrics.NewRecorder()
+	metrics, err := metrics.NewRecorder(logger, taskRunInformer.Lister())
 	if err != nil {
-		fmt.Errorf("Failed to create taskrun metrics recorder %v", err)
+		logger.Errorf("Failed to create taskrun metrics recorder %v", err)
 	}
 
 	opt := reconciler.Options{
@@ -78,7 +77,7 @@ func NewController(
 		resourceLister:    resourceInformer.Lister(),
 		timeoutHandler:    timeoutHandler,
 		cloudEventClient:  cloudeventclient.Get(ctx),
-		metrics:           recorder,
+		metrics:           metrics,
 	}
 	impl := controller.NewImpl(c, c.Logger, taskRunControllerName)
 

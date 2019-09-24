@@ -173,15 +173,14 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 		}
 	}
 
-	if equality.Semantic.DeepEqual(original.Status, pr.Status) {
-		return nil
-	}
-
-	_, err = c.updateStatus(pr);
-	if err != nil {
-		c.Logger.Warn("Failed to update PipelineRun status", zap.Error(err))
-		c.Recorder.Event(pr, corev1.EventTypeWarning, eventReasonFailed, "PipelineRun failed to update")
-		return err
+	var updated bool
+	if !equality.Semantic.DeepEqual(original.Status, pr.Status) {
+		if _, err := c.updateStatus(pr); err != nil {
+			c.Logger.Warn("Failed to update PipelineRun status", zap.Error(err))
+			c.Recorder.Event(pr, corev1.EventTypeWarning, eventReasonFailed, "PipelineRun failed to update")
+			return err
+		}
+		updated = true
 	}
 
 	// the status and labels/annotations simultaneously.
@@ -192,9 +191,13 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 			c.Recorder.Event(pr, corev1.EventTypeWarning, eventReasonFailed, "PipelineRun failed to update labels/annotations")
 			return err
 		}
+		updated = true
 	}
 
-	c.metrics.RunningPrsCount()
+	if updated {
+		c.metrics.RunningPrsCount()
+	}
+
 	return err
 }
 

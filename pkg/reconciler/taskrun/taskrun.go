@@ -149,26 +149,35 @@ func (c *Reconciler) Reconcile(ctx context.Context, key string) error {
 }
 
 func (c *Reconciler) updateStatusLabelsAndAnnotations(tr, original *v1alpha1.TaskRun) error {
-	var err error
-	if equality.Semantic.DeepEqual(original.Status, tr.Status) {
+	var updated bool
+
+	if !equality.Semantic.DeepEqual(original.Status, tr.Status) {
 		// If we didn't change anything then don't call updateStatus.
 		// This is important because the copy we loaded from the informer's
 		// cache may be stale and we don't want to overwrite a prior update
 		// to status with this stale state.
-	} else if _, err := c.updateStatus(tr); err != nil {
-		c.Logger.Warn("Failed to update taskRun status", zap.Error(err))
-		return err
+		if _, err := c.updateStatus(tr); err != nil {
+			c.Logger.Warn("Failed to update taskRun status", zap.Error(err))
+			return err
+		}
+		updated = true
 	}
 
 	// Since we are using the status subresource, it is not possible to update
 	// the status and labels/annotations simultaneously.
-	if !reflect.DeepEqual(original.ObjectMeta.Labels, tr.ObjectMeta.Labels) {
+	if !reflect.DeepEqual(original.ObjectMeta.Labels, tr.ObjectMeta.Labels) || !reflect.DeepEqual(original.ObjectMeta.Annotations, tr.ObjectMeta.Annotations) {
 		if _, err := c.updateLabelsAndAnnotations(tr); err != nil {
 			c.Logger.Warn("Failed to update TaskRun labels/annotations", zap.Error(err))
 			return err
 		}
+		updated = true
 	}
-	return err
+
+	if updated {
+		c.metrics.RunningTrsCount()
+	}
+
+	return nil
 }
 
 func (c *Reconciler) getTaskFunc(tr *v1alpha1.TaskRun) (resources.GetTask, v1alpha1.TaskKind) {
