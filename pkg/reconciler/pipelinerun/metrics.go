@@ -1,4 +1,4 @@
-package metrics
+package pipelinerun
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/tektoncd/pipeline/pkg/apis/pipeline/v1alpha1"
 	listers "github.com/tektoncd/pipeline/pkg/client/listers/pipeline/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
@@ -108,9 +109,13 @@ func (r *Recorder) Record(pr *v1alpha1.PipelineRun) {
 	}
 
 	duration := time.Since(pr.Status.StartTime.Time)
-
 	if pr.Status.CompletionTime != nil {
 		duration = pr.Status.CompletionTime.Sub(pr.Status.StartTime.Time)
+	}
+
+	status := "success"
+	if pr.Status.Conditions[0].Status == corev1.ConditionFalse {
+		status = "failed"
 	}
 
 	ctx, err := tag.New(
@@ -118,7 +123,7 @@ func (r *Recorder) Record(pr *v1alpha1.PipelineRun) {
 		tag.Insert(r.pipeline, pr.Spec.PipelineRef.Name),
 		tag.Insert(r.pipelineRun, pr.Name),
 		tag.Insert(r.namespace, pr.Namespace),
-		tag.Insert(r.status, string(pr.Status.Conditions[0].Status)),
+		tag.Insert(r.status, status),
 	)
 
 	if err != nil {

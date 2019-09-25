@@ -33,7 +33,6 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources/cloudevent"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/sidecars"
-	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/taskrun/metrics"
 	"github.com/tektoncd/pipeline/pkg/status"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
@@ -72,7 +71,7 @@ type Reconciler struct {
 	tracker           tracker.Interface
 	cache             *entrypoint.Cache
 	timeoutHandler    *reconciler.TimeoutSet
-	metrics           *metrics.Recorder
+	metrics           *Recorder
 }
 
 // Check that our Reconciler implements controller.Reconciler

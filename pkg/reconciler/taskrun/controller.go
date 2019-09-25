@@ -29,7 +29,6 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun/entrypoint"
 	cloudeventclient "github.com/tektoncd/pipeline/pkg/reconciler/taskrun/resources/cloudevent"
-	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/taskrun/metrics"
 	"k8s.io/client-go/tools/cache"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
@@ -56,7 +55,7 @@ func NewController(
 	podInformer := podinformer.Get(ctx)
 	resourceInformer := resourceinformer.Get(ctx)
 	timeoutHandler := reconciler.NewTimeoutHandler(ctx.Done(), logger)
-	metrics, err := metrics.NewRecorder(logger, taskRunInformer.Lister())
+	metrics, err := NewRecorder(logger, taskRunInformer.Lister())
 	if err != nil {
 		logger.Errorf("Failed to create taskrun metrics recorder %v", err)
 	}

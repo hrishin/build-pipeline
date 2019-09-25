@@ -30,7 +30,6 @@ import (
 	taskruninformer "github.com/tektoncd/pipeline/pkg/client/injection/informers/pipeline/v1alpha1/taskrun"
 	"github.com/tektoncd/pipeline/pkg/reconciler"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/config"
-	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/pipelinerun/metrics"
 	"k8s.io/client-go/tools/cache"
 	"knative.dev/pkg/configmap"
 	"knative.dev/pkg/controller"
@@ -58,7 +57,7 @@ func NewController(
 	resourceInformer := resourceinformer.Get(ctx)
 	conditionInformer := conditioninformer.Get(ctx)
 	timeoutHandler := reconciler.NewTimeoutHandler(ctx.Done(), logger)
-	metrics, err := metrics.NewRecorder(logger, pipelineRunInformer.Lister())
+	metrics, err := NewRecorder(logger, pipelineRunInformer.Lister())
 	if err != nil {
 		logger.Errorf("Failed to create pipelinerun metrics recorder %v", err)
 	}

@@ -32,7 +32,6 @@ import (
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipeline/dag"
 	"github.com/tektoncd/pipeline/pkg/reconciler/pipelinerun/resources"
 	"github.com/tektoncd/pipeline/pkg/reconciler/taskrun"
-	"github.com/tektoncd/pipeline/pkg/reconciler/v1alpha1/pipelinerun/metrics"
 	"go.uber.org/zap"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
@@ -101,7 +100,7 @@ type Reconciler struct {
 	tracker           tracker.Interface
 	configStore       configStore
 	timeoutHandler    *reconciler.TimeoutSet
-	metrics           *metrics.Recorder
+	metrics           *Recorder
 }
 
 // Check that our Reconciler implements controller.Reconciler
