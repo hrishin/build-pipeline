@@ -5,6 +5,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:latest
 # distroless. We want to mimic as much as possible the distroless image but
 # still be based on a UBI, it's not pretty but let's hope we can remove this when
 # we get https://github.com/tektoncd/pipeline/issues/1347
-RUN for i in /usr/bin/* /usr/sbin/* /bin/* /sbin/*;do [[ $i == *bin/true || $i == *bin/rm || $i == *bin/coreutils ]] && continue;rm -vf $i;done
+RUN for i in /usr/bin/* /usr/sbin/* /bin/* /sbin/*;do \
+    [[ $i == *bin/true || $i == *bin/rm || $i == *bin/coreutils ]] && continue;rm -vf $i;done
 
 ENTRYPOINT ["/bin/true"]
